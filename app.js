@@ -31,6 +31,7 @@ const overlayNextCameraButton = document.getElementById("overlay-next-camera-but
 const snapshotTabButton = document.getElementById("snapshot-tab");
 const liveTabButton = document.getElementById("live-tab");
 const localTabButton = document.getElementById("local-tab");
+const viewerPanel = document.querySelector(".viewer-panel");
 const viewerTitle = document.getElementById("viewer-title");
 const snapshotPanel = document.getElementById("snapshot-panel");
 const livePanel = document.getElementById("live-panel");
@@ -75,6 +76,20 @@ let currentCameraCollection = [];
 let currentCameraMeta = null;
 let selectedJobFiles = [];
 let currentSnapshotBlob = null;
+
+function scrollViewerIntoView() {
+  if (!viewerPanel) {
+    return;
+  }
+
+  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  window.requestAnimationFrame(() => {
+    viewerPanel.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start"
+    });
+  });
+}
 
 function getSavedCameraIds() {
   try {
@@ -635,7 +650,7 @@ function getCameraStateSummary(camera) {
   return parts.join(" | ");
 }
 
-function getSnapshotFailureMessage(statusCode, camera) {
+function getSnapshotFailureMessage(statusCode, camera, apiMessage = "") {
   if (statusCode === 401) {
     return "Login failed or session expired. Please sign in again.";
   }
@@ -646,6 +661,20 @@ function getSnapshotFailureMessage(statusCode, camera) {
 
   if (statusCode === 403) {
     return "Camera found, but your user does not have viewer access to this camera.";
+  }
+
+  if (statusCode === 500) {
+    return "Camera found, but Evercam could not reach the camera node for a live snapshot. Try refreshing in a moment.";
+  }
+
+  if (statusCode === 504) {
+    return "Camera found and online, but Evercam did not receive a JPEG snapshot from the camera in time. Try refreshing in a moment.";
+  }
+
+  if (camera && String(camera.status || "").toLowerCase() === "online") {
+    return apiMessage
+      ? `Camera found and online, but Evercam could not retrieve a live snapshot. ${apiMessage}`
+      : "Camera found and online, but Evercam could not retrieve a live snapshot right now.";
   }
 
   const stateSummary = getCameraStateSummary(camera);
@@ -970,6 +999,7 @@ async function loadSnapshot(cameraId, options = {}) {
   snapshotImage.hidden = true;
   snapshotPlaceholder.hidden = false;
   snapshotPlaceholder.textContent = "Loading latest snapshot...";
+  scrollViewerIntoView();
 
   cleanupObjectUrl();
   cleanupHls();
@@ -992,8 +1022,21 @@ async function loadSnapshot(cameraId, options = {}) {
     });
 
     if (!response.ok) {
+      let apiMessage = "";
+      try {
+        const errorBody = await response.clone().json();
+        apiMessage = errorBody.message || errorBody.error || "";
+      } catch {
+        try {
+          apiMessage = await response.text();
+        } catch {
+          apiMessage = "";
+        }
+      }
+
       const error = new Error(`HTTP ${response.status}`);
       error.statusCode = response.status;
+      error.apiMessage = apiMessage.trim();
       throw error;
     }
 
@@ -1022,7 +1065,7 @@ async function loadSnapshot(cameraId, options = {}) {
   } catch (error) {
     currentSnapshotBlob = null;
     updateSaveSnapshotJobButton();
-    const message = getSnapshotFailureMessage(error.statusCode, currentCameraMeta);
+    const message = getSnapshotFailureMessage(error.statusCode, currentCameraMeta, error.apiMessage);
     setStatus(message, "error");
     snapshotImage.hidden = true;
     snapshotPlaceholder.hidden = false;
@@ -1064,6 +1107,7 @@ async function loadLiveFeed(cameraId, options = {}) {
   liveVideo.hidden = true;
   livePlaceholder.hidden = false;
   livePlaceholder.textContent = "Connecting to live feed...";
+  scrollViewerIntoView();
 
   cleanupObjectUrl();
   cleanupHls();
@@ -1444,8 +1488,7 @@ async function tryLoadSingleCamera(cameraId) {
   return { ok: true };
 }
 
-lookupForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function runLookup() {
   if (document.activeElement instanceof HTMLElement) {
     document.activeElement.blur();
   }
@@ -1533,4 +1576,22 @@ lookupForm.addEventListener("submit", async (event) => {
   }
 
   setLookupStatus("No camera or project found for that ID.", "");
+}
+
+function loadQueryFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const value = params.get("q")?.trim().toLowerCase();
+  if (!value) {
+    return;
+  }
+
+  lookupInput.value = value;
+  runLookup();
+}
+
+lookupForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await runLookup();
 });
+
+loadQueryFromUrl();
