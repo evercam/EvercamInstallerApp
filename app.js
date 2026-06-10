@@ -31,6 +31,7 @@ const overlayNextCameraButton = document.getElementById("overlay-next-camera-but
 const snapshotTabButton = document.getElementById("snapshot-tab");
 const liveTabButton = document.getElementById("live-tab");
 const localTabButton = document.getElementById("local-tab");
+const viewerPanel = document.querySelector(".viewer-panel");
 const viewerTitle = document.getElementById("viewer-title");
 const snapshotPanel = document.getElementById("snapshot-panel");
 const livePanel = document.getElementById("live-panel");
@@ -75,6 +76,20 @@ let currentCameraCollection = [];
 let currentCameraMeta = null;
 let selectedJobFiles = [];
 let currentSnapshotBlob = null;
+
+function scrollViewerIntoView() {
+  if (!viewerPanel) {
+    return;
+  }
+
+  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  window.requestAnimationFrame(() => {
+    viewerPanel.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start"
+    });
+  });
+}
 
 function getSavedCameraIds() {
   try {
@@ -970,6 +985,7 @@ async function loadSnapshot(cameraId, options = {}) {
   snapshotImage.hidden = true;
   snapshotPlaceholder.hidden = false;
   snapshotPlaceholder.textContent = "Loading latest snapshot...";
+  scrollViewerIntoView();
 
   cleanupObjectUrl();
   cleanupHls();
@@ -1064,6 +1080,7 @@ async function loadLiveFeed(cameraId, options = {}) {
   liveVideo.hidden = true;
   livePlaceholder.hidden = false;
   livePlaceholder.textContent = "Connecting to live feed...";
+  scrollViewerIntoView();
 
   cleanupObjectUrl();
   cleanupHls();
