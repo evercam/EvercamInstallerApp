@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Evercam Snapshot Viewer</title>
-  <meta name="theme-color" content="#c4161c">
+  <meta name="theme-color" content="#171717">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Installer">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   </head>
@@ -62,7 +62,7 @@
           <div id="job-note-panel" class="job-note-panel" hidden>
             <p class="section-title">Job Notes</p>
             <label for="job-note-content" class="label">Note</label>
-            <textarea id="job-note-content" class="note-input" placeholder="Add a job note for the installer team or project record."></textarea>
+            <textarea id="job-note-content" class="note-input" placeholder="Add a note or attach photos"></textarea>
             <div class="job-note-actions">
               <label for="job-note-camera" class="ghost-button file-picker">Use Camera</label>
               <input id="job-note-camera" type="file" accept="image/*" capture="environment" hidden>
