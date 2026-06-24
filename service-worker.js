@@ -1,4 +1,4 @@
-const CACHE_NAME = "evercam-installer-v2";
+const CACHE_NAME = "evercam-installer-v3";
 const APP_SHELL = [
   "/",
   "/index.html",
